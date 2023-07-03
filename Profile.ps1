@@ -79,7 +79,7 @@ function connect() {
 	ssh 192.168.100.7 -t "cd '$cwd' && /bin/zsh -i"
 }
 
-function py2c($in, $out) {
+function py2c($in, $out) {  # See: https://sp1d3r.vercel.app/posts/pycompile/
 	if (test-path $in) {
 		iex "cython --embed -3 --cplus -o $in.cpp $in"
 		iex "g++ -I $env:Pyclude $in.cpp -l python310.lib -L $env:Pylib -Ofast -march=native -o $out.exe"
