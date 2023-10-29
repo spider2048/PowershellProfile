@@ -1,3 +1,5 @@
+$global:hostname = hostname
+
 function repath() {
 	$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User") 
 }
@@ -22,6 +24,7 @@ set-alias find D:\msys64\usr\bin\find.exe
 set-alias cat bat.exe
 set-alias c clear
 set-alias npp notepad++
+set-alias vim nvim-qt
 
 function colorenum() {
 	$colors = [enum]::GetValues([System.ConsoleColor])
@@ -63,11 +66,25 @@ function prompt() {
 	$ret = $LASTEXITCODE
 
 	Write-Host " "
-	p_hostname 
-	p_returncode 
-	p_timetaken 
-	p_folder 
-	p_prompt 
+	# p_hostname 
+	# $hostname = hostname
+	Write-Host $env:UserName -ForegroundColor Green -NoNewline
+	Write-Host '@' -NoNewLine
+	Write-Host $global:hostname -ForegroundColor Cyan -NoNewLine
+	
+	# p_returncode 
+	Write-Host " $ret" -ForegroundColor DarkGray -NoNewLine
+	# p_timetaken 
+	$command = Get-History -Count 1
+	$time = [Math]::round(($command.endExecutionTime - $command.StartExecutionTime).Totalmilliseconds)
+
+	$time = [float]($time / 1000)
+	Write-Host " $time`s" -ForegroundColor Gray -NoNewline	
+	# p_folder 
+	Write-Host "" $pwd -ForegroundColor Yellow
+	# p_prompt 
+	Write-Host "%" -ForegroundColor Cyan -NoNewline
+	echo " "
 }
 
 function connect() {
@@ -75,14 +92,14 @@ function connect() {
     $cwd = $cwd.replace('C:', '/mnt/C')
     $cwd = $cwd.replace('D:', '/mnt/D')
     $cwd = $cwd.replace("\", '/')
-    # plink.exe -load X11 -t "cd '$cwd' && /bin/terminator"
+    # plink.exe -load X11 -t "cd '$cwd' && export DISPLAY=192.168.100.1:0 && /bin/terminator"
 	ssh 192.168.100.7 -t "cd '$cwd' && /bin/zsh -i"
 }
 
-function py2c($in, $out) {  # See: https://sp1d3r.vercel.app/posts/pycompile/
+function py2c($in, $out) {
 	if (test-path $in) {
 		iex "cython --embed -3 --cplus -o $in.cpp $in"
-		iex "g++ -I $env:Pyclude $in.cpp -l python310.lib -L $env:Pylib -Ofast -march=native -o $out.exe"
+		iex "g++ -I $env:Pyclude $in.cpp -l python311.lib -L $env:Pylib -Ofast -march=native -o $out.exe"
 		del "$in.cpp"
 		del "$out.exp"
 		del "$out.lib"
@@ -91,5 +108,22 @@ function py2c($in, $out) {  # See: https://sp1d3r.vercel.app/posts/pycompile/
 	}
 }
 
-$vc = 'cmd /k "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"'
-$vcpath = "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
+function vs() {
+	push-location
+	& "D:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1" -Arch amd64
+	pop-location
+}
+
+function vs32() {
+	push-location
+	& "C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\Tools\Launch-VsDevShell.ps1"
+	pop-location
+}
+
+function vmup() {
+	vboxmanage startvm arch --type=headless
+}
+
+function vmdown() {
+	vboxmanage controlvm arch acpipowerbutton
+}
